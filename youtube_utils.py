@@ -22,7 +22,7 @@ class VideoInfo:
     def summary(self) -> str:
         """Extract a summary from the video description."""
         if not self.description:
-return "No description available."
+            return "No description available."
 
         # Take first 500 characters or until double newline
         desc = self.description.strip()
