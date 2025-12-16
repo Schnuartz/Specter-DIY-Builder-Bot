@@ -150,11 +150,37 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         f"and post links to the recordings.\n\n"
         f"Next call: #{call_number}\n\n"
         f"Commands:\n"
+        f"/help - Show this help message\n"
         f"/status - Show bot status\n"
         f"/nextcall - Show next call info\n"
         f"/latestvideo - Show latest video\n"
         f"/callnumber - Show/set call number\n"
         f"/chatid - Show chat ID (for setup)"
+    )
+
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /help command."""
+    await update.message.reply_text(
+        "I'm the Specter DIY Builder Bot! Here's what I can do:\n\n"
+        "*Core Purpose:*\n"
+        "I help the Specter DIY Builder community by automating call reminders and sharing recordings.\n\n"
+        "*Automated Tasks:*\n"
+        "- Send reminders 3 days, 1 day, and 1 hour before the weekly call (Thursdays 17:00 CET).\n"
+        "- After the call, I find the latest video in our YouTube playlist and post it here with a summary.\n"
+        "- I automatically keep track of the call number.\n\n"
+        "*Available Commands:*\n"
+        "`/start` - Welcome message.\n"
+        "`/help` - You are here.\n"
+        "`/status` - Shows if I'm running correctly and the current time.\n"
+        "`/nextcall` - Displays the date, time, and a countdown to the next call.\n"
+        "`/latestvideo` - Fetches and displays the most recent video from the playlist.\n"
+        "`/postvideo` - (Admin) Manually triggers posting the latest video.\n"
+        "`/callnumber [number]` - Shows the current call number. An admin can also set a new one (e.g., `/callnumber 42`).\n"
+        "`/chatid` - Shows the ID of this chat (required for initial setup).\n\n"
+        "My code is open-source! You can find it on GitHub.",
+        parse_mode=ParseMode.MARKDOWN,
+        disable_web_page_preview=True,
     )
 
 
@@ -347,6 +373,7 @@ def main() -> None:
 
     # Add command handlers
     application.add_handler(CommandHandler("start", start_command))
+    application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("status", status_command))
     application.add_handler(CommandHandler("nextcall", next_call_command))
     application.add_handler(CommandHandler("latestvideo", latest_video_command))
