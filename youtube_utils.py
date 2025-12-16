@@ -80,6 +80,7 @@ def get_latest_video_from_playlist(playlist_id: str) -> Optional[VideoInfo]:
             return VideoInfo(
                 video_id=video.get("id", ""),
                 title=video.get("title", "Unknown Title"),
+                url=video.get("webpage_url", ""),
                 description=video.get("description", ""),
                 upload_date=video.get("upload_date", ""),
                 duration=video.get("duration", 0),
