@@ -116,7 +116,7 @@ def get_video_info(video_id: str) -> Optional[VideoInfo]:
 
             return VideoInfo(
                 video_id=video.get("id", ""),
-                title=video.get("title", "Unbekannter Titel"),
+                title=video.get("title", "Unknown Title"),
                 url=video.get("webpage_url", video_url),
                 description=video.get("description", ""),
                 upload_date=video.get("upload_date", ""),

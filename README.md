@@ -1,73 +1,73 @@
 # Specter DIY Builder Bot
 
-Ein Telegram-Bot für die Specter DIY Builder Community, der automatisch Erinnerungen für den wöchentlichen Call sendet und nach dem Call Links zur YouTube-Aufzeichnung postet.
+A Telegram bot for the Specter DIY Builder Community that automatically sends reminders for the weekly call and posts links to the YouTube recording after the call.
 
 ## Features
 
-- **Automatische Erinnerungen** für den wöchentlichen Call (Donnerstag 17:00 CET)
-  - 3 Tage vorher (Montag)
-  - 1 Tag vorher (Mittwoch)
-  - 1 Stunde vorher (Donnerstag)
-- **Automatisches Posten** der YouTube-Aufzeichnung nach dem Call
-- **Zusammenfassung** aus der Video-Beschreibung extrahiert
-- **Bot-Befehle** für manuelle Interaktion
+- **Automatic reminders** for the weekly call (Thursday 5:00 PM CET)
+  - 3 days in advance (Monday)
+  - 1 day in advance (Wednesday)
+  - 1 hour in advance (Thursday)
+- **Automatic posting** of the YouTube recording after the call
+- **Summary** extracted from the video description
+- **Bot commands** for manual interaction
 
-## Bot-Befehle
+## Bot Commands
 
-| Befehl | Beschreibung |
-|--------|--------------|
-| `/start` | Zeigt Willkommensnachricht |
-| `/status` | Zeigt Bot-Status |
-| `/nextcall` | Zeigt nächsten Call-Termin |
-| `/latestvideo` | Zeigt das neueste Video aus der Playlist |
-| `/chatid` | Zeigt die Chat-ID (für Setup) |
-| `/postvideo` | Manuell das neueste Video posten |
+| Command | Description |
+|---|---|
+| `/start` | Displays a welcome message |
+| `/status` | Displays the bot status |
+| `/nextcall` | Shows the next call date |
+| `/latestvideo` | Shows the latest video from the playlist |
+| `/chatid` | Shows the chat ID (for setup) |
+| `/postvideo` | Manually post the latest video |
 
 ## Installation
 
-### 1. Repository klonen
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/FinnFrei662/Specter-DIY-Builder-Bot.git
 cd Specter-DIY-Builder-Bot
 ```
 
-### 2. Python-Umgebung einrichten
+### 2. Set Up Python Environment
 
 ```bash
-# Virtuelle Umgebung erstellen
+# Create a virtual environment
 python -m venv venv
 
-# Aktivieren (Windows)
+# Activate (Windows)
 venv\Scripts\activate
 
-# Aktivieren (Linux/Mac)
+# Activate (Linux/Mac)
 source venv/bin/activate
 
-# Dependencies installieren
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 3. Konfiguration
+### 3. Configuration
 
-1. Kopiere `.env.example` zu `.env`:
+1. Copy `.env.example` to `.env`:
    ```bash
    cp .env.example .env
    ```
 
-2. Bearbeite `.env` mit deinen Werten:
+2. Edit `.env` with your values:
    ```
-   TELEGRAM_BOT_TOKEN=dein_bot_token
-   TELEGRAM_CHAT_ID=deine_chat_id
+   TELEGRAM_BOT_TOKEN=your_bot_token
+   TELEGRAM_CHAT_ID=your_chat_id
    ```
 
-### 4. Chat-ID herausfinden
+### 4. Find the Chat ID
 
-1. Füge den Bot zur Telegram-Gruppe hinzu
-2. Sende `/chatid` in der Gruppe
-3. Kopiere die angezeigte ID in deine `.env`
+1. Add the bot to the Telegram group
+2. Send `/chatid` in the group
+3. Copy the displayed ID into your `.env` file
 
-### 5. Bot starten
+### 5. Start the Bot
 
 ```bash
 python bot.py
@@ -75,21 +75,21 @@ python bot.py
 
 ## Deployment
 
-### Option A: Lokaler Server / Raspberry Pi
+### Option A: Local Server / Raspberry Pi
 
 ```bash
-# Mit nohup im Hintergrund laufen lassen
+# Run in the background with nohup
 nohup python bot.py > bot.log 2>&1 &
 
-# Oder mit screen
+# Or with screen
 screen -S specterbot
 python bot.py
-# Ctrl+A, D zum Detachen
+# Ctrl+A, D to detach
 ```
 
 ### Option B: Systemd Service (Linux)
 
-Erstelle `/etc/systemd/system/specterbot.service`:
+Create `/etc/systemd/system/specterbot.service`:
 
 ```ini
 [Unit]
@@ -125,58 +125,58 @@ COPY . .
 CMD ["python", "bot.py"]
 ```
 
-## Konfiguration anpassen
+## Customization
 
-### Zeitplan ändern
+### Change Schedule
 
-In `config.py` kannst du folgende Werte anpassen:
+In `config.py`, you can adjust the following values:
 
 ```python
-CALL_DAY = "thursday"  # Tag des Calls
-CALL_HOUR = 17         # Uhrzeit (24h Format)
+CALL_DAY = "thursday"  # Day of the call
+CALL_HOUR = 17         # Hour (24h format)
 TIMEZONE = "Europe/Berlin"
 ```
 
-### Nachrichten anpassen
+### Customize Messages
 
-Die Nachrichten-Templates findest du ebenfalls in `config.py`:
+You can also find the message templates in `config.py`:
 - `REMINDER_MESSAGE_3_DAYS`
 - `REMINDER_MESSAGE_1_DAY`
 - `REMINDER_MESSAGE_1_HOUR`
 - `POST_CALL_MESSAGE_TEMPLATE`
 
-## Projektstruktur
+## Project Structure
 
 ```
 Specter-DIY-Builder-Bot/
-├── bot.py              # Hauptbot mit Scheduler
-├── config.py           # Konfiguration und Messages
-├── youtube_utils.py    # YouTube API Integration
-├── requirements.txt    # Python Dependencies
-├── .env.example        # Beispiel-Konfiguration
-├── .gitignore          # Git Ignore Rules
-└── README.md           # Diese Datei
+├── bot.py              # Main bot with scheduler
+├── config.py           # Configuration and messages
+├── youtube_utils.py    # YouTube API integration
+├── requirements.txt    # Python dependencies
+├── .env.example        # Example configuration
+├── .gitignore          # Git ignore rules
+└── README.md           # This file
 ```
 
 ## Troubleshooting
 
-### Bot antwortet nicht
-- Prüfe ob der Bot-Token korrekt ist
-- Stelle sicher, dass der Bot zur Gruppe hinzugefügt wurde
-- Überprüfe die Logs: `tail -f bot.log`
+### Bot is not responding
+- Check if the bot token is correct
+- Make sure the bot has been added to the group
+- Check the logs: `tail -f bot.log`
 
-### Erinnerungen werden nicht gesendet
-- Prüfe ob die `TELEGRAM_CHAT_ID` korrekt ist
-- Stelle sicher, dass der Bot Admin-Rechte in der Gruppe hat (oder zumindest Nachrichten senden darf)
+### Reminders are not being sent
+- Check if the `TELEGRAM_CHAT_ID` is correct
+- Make sure the bot has admin rights in the group (or at least permission to send messages)
 
-### YouTube-Videos werden nicht gefunden
-- Überprüfe die `YOUTUBE_PLAYLIST_ID` in der `.env`
-- Teste mit `python youtube_utils.py`
+### YouTube videos are not found
+- Check the `YOUTUBE_PLAYLIST_ID` in the `.env`
+- Test with `python youtube_utils.py`
 
-## Lizenz
+## License
 
 MIT License
 
-## Kontakt
+## Contact
 
-Specter DIY Builder Community - [Telegram Gruppe](https://t.me/+93YQ5guL95syMmYy)
+Specter DIY Builder Community - [Telegram Group](https://t.me/+93YQ5guL95syMmYy)
