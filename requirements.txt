@@ -1,0 +1,5 @@
+python-telegram-bot==21.7
+apscheduler==3.10.4
+yt-dlp==2024.11.18
+python-dotenv==1.0.1
+pytz==2024.2
