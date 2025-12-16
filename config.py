@@ -83,10 +83,15 @@ Bis zum nächsten Mal! 👋
 """
 
     @classmethod
-    def validate(cls):
+    def validate(cls, require_chat_id: bool = True):
         """Validate required configuration."""
         if not cls.TELEGRAM_BOT_TOKEN:
             raise ValueError("TELEGRAM_BOT_TOKEN is required")
-        if not cls.TELEGRAM_CHAT_ID:
+        if require_chat_id and not cls.TELEGRAM_CHAT_ID:
             raise ValueError("TELEGRAM_CHAT_ID is required")
         return True
+
+    @classmethod
+    def is_fully_configured(cls) -> bool:
+        """Check if all required config is present."""
+        return bool(cls.TELEGRAM_BOT_TOKEN and cls.TELEGRAM_CHAT_ID)

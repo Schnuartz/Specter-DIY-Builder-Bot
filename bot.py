@@ -243,17 +243,25 @@ def setup_scheduler(bot: Bot) -> AsyncIOScheduler:
     return scheduler
 
 
-async def main() -> None:
+def main() -> None:
     """Main function to run the bot."""
-    # Validate configuration
+    # Validate configuration (allow missing chat_id for setup mode)
     try:
-        Config.validate()
+        Config.validate(require_chat_id=False)
     except ValueError as e:
         logger.error(f"Configuration error: {e}")
         logger.error("Please check your .env file")
         return
 
-    logger.info("Starting Specter DIY Builder Bot...")
+    setup_mode = not Config.is_fully_configured()
+    if setup_mode:
+        logger.warning("=" * 50)
+        logger.warning("SETUP MODE: TELEGRAM_CHAT_ID is not configured!")
+        logger.warning("Add bot to your group and send /chatid to get the ID")
+        logger.warning("Then add it to your .env file and restart the bot")
+        logger.warning("=" * 50)
+    else:
+        logger.info("Starting Specter DIY Builder Bot...")
 
     # Create application
     application = Application.builder().token(Config.TELEGRAM_BOT_TOKEN).build()
@@ -266,21 +274,20 @@ async def main() -> None:
     application.add_handler(CommandHandler("chatid", chatid_command))
     application.add_handler(CommandHandler("postvideo", post_video_command))
 
-    # Set up scheduler
-    scheduler = setup_scheduler(application.bot)
+    # Set up scheduler (only if fully configured)
+    if not setup_mode:
+        scheduler = setup_scheduler(application.bot)
+        scheduler.start()
+        logger.info("Scheduler started")
 
-    # Start scheduler
-    scheduler.start()
-    logger.info("Scheduler started")
-
-    # Log scheduled jobs
-    for job in scheduler.get_jobs():
-        logger.info(f"Scheduled job: {job.name} - Next run: {job.next_run_time}")
+        # Log scheduled jobs
+        for job in scheduler.get_jobs():
+            logger.info(f"Scheduled job: {job.name} - Next run: {job.next_run_time}")
 
     # Start the bot
     logger.info("Bot is running. Press Ctrl+C to stop.")
-    await application.run_polling(allowed_updates=Update.ALL_TYPES)
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
