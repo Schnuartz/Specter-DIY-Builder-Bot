@@ -1,9 +1,43 @@
 """Configuration management for the Specter DIY Builder Bot."""
 
 import os
+import json
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Path for storing call state (number, topics, etc.)
+STATE_FILE = Path(__file__).parent / "call_state.json"
+
+
+def load_call_state() -> dict:
+    """Load the current call state from file."""
+    if STATE_FILE.exists():
+        with open(STATE_FILE, "r") as f:
+            return json.load(f)
+    return {"call_number": 9, "topics": []}  # Default starting number
+
+
+def save_call_state(state: dict) -> None:
+    """Save the call state to file."""
+    with open(STATE_FILE, "w") as f:
+        json.dump(state, f, indent=2)
+
+
+def get_next_call_number() -> int:
+    """Get the next call number."""
+    state = load_call_state()
+    return state.get("call_number", 9)
+
+
+def increment_call_number() -> int:
+    """Increment the call number after a call."""
+    state = load_call_state()
+    state["call_number"] = state.get("call_number", 9) + 1
+    state["topics"] = []  # Reset topics for next call
+    save_call_state(state)
+    return state["call_number"]
 
 
 class Config:
@@ -20,6 +54,10 @@ class Config:
     )
     YOUTUBE_PLAYLIST_URL = f"https://www.youtube.com/playlist?list={YOUTUBE_PLAYLIST_ID}"
 
+    # Call Links
+    CALENDAR_LINK = "https://calendar.app.google/7cWw2rLLFhrBMhtF8"
+    JITSI_LINK = "https://meet.jit.si/SpecterBuilderCall"
+
     # Schedule (Thursday 17:00 CET)
     CALL_DAY = "thursday"
     CALL_HOUR = 17
@@ -33,53 +71,63 @@ class Config:
         1,   # 1 hour before
     ]
 
-    # Messages
+    # Message Templates (English)
+    # {call_number} - the call number (e.g., #9)
+    # {date} - the date (e.g., 19.12)
+    # {topics} - optional topics section
+
     REMINDER_MESSAGE_3_DAYS = """
-🔔 *Specter DIY Builder Call in 3 Tagen!*
+🔔 *Specter DIY Builder Call #{call_number} in 3 days!*
 
-📅 Donnerstag um 17:00 Uhr (CET)
-📺 Live auf YouTube
+On Thursday {date} at 17:00 CET we have our weekly Specter DIY Builder Call.
 
-Markiert euch den Termin! Wir freuen uns auf euch.
+Here we discuss PRs and Specter DIY development in any form.
 
-🔗 YouTube Kanal: https://www.youtube.com/@AnchorWatch
+Just to let you know, we are livestreaming this call on YouTube.
+
+Do you have any topics? Reply to this message!
+
+📅 Calendar: {calendar_link}
+🔗 Jitsi: {jitsi_link}
 """
 
     REMINDER_MESSAGE_1_DAY = """
-🔔 *Specter DIY Builder Call MORGEN!*
+🔔 *Tomorrow: Specter DIY Builder Call #{call_number}*
 
-📅 Donnerstag um 17:00 Uhr (CET)
-📺 Live auf YouTube
+Tomorrow {date} at 17:00 CET (like every week)
 
-Nicht vergessen - morgen ist es soweit!
+Here we discuss PRs and Specter DIY development in any form.
 
-🔗 YouTube Kanal: https://www.youtube.com/@AnchorWatch
+Just to let you know, we are livestreaming this call on YouTube.
+
+Do you have any topics?
+
+📅 Calendar: {calendar_link}
+🔗 Jitsi: {jitsi_link}
 """
 
     REMINDER_MESSAGE_1_HOUR = """
-🚀 *Specter DIY Builder Call in 1 STUNDE!*
+🚀 *Specter DIY Builder Call #{call_number} starts in 1 HOUR!*
 
-📅 Heute um 17:00 Uhr (CET)
-📺 Live auf YouTube
+Today at 17:00 CET - join us!
 
-Macht euch bereit - gleich geht's los!
-
-🔗 YouTube Kanal: https://www.youtube.com/@AnchorWatch
+🔗 Jitsi: {jitsi_link}
+📺 YouTube Livestream: https://www.youtube.com/@AnchorWatch
 """
 
     POST_CALL_MESSAGE_TEMPLATE = """
-📺 *Specter DIY Builder Call - Aufzeichnung verfügbar!*
+📺 *Specter DIY Builder Call #{call_number} - Recording Available!*
 
-Ihr habt den Call verpasst oder wollt ihn nochmal anschauen? Kein Problem!
+Missed the call or want to watch it again? No problem!
 
 🎬 *{title}*
 
-📝 *Zusammenfassung:*
+📝 *Summary:*
 {summary}
 
-🔗 *Zum Video:* {url}
+🔗 *Watch here:* {url}
 
-Bis zum nächsten Mal! 👋
+See you next week! 👋
 """
 
     @classmethod

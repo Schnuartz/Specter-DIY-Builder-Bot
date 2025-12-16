@@ -22,7 +22,7 @@ class VideoInfo:
     def summary(self) -> str:
         """Extract a summary from the video description."""
         if not self.description:
-            return "Keine Beschreibung verfügbar."
+return "No description available."
 
         # Take first 500 characters or until double newline
         desc = self.description.strip()
@@ -79,8 +79,7 @@ def get_latest_video_from_playlist(playlist_id: str) -> Optional[VideoInfo]:
 
             return VideoInfo(
                 video_id=video.get("id", ""),
-                title=video.get("title", "Unbekannter Titel"),
-                url=video.get("webpage_url", f"https://www.youtube.com/watch?v={video.get('id', '')}"),
+                title=video.get("title", "Unknown Title"),
                 description=video.get("description", ""),
                 upload_date=video.get("upload_date", ""),
                 duration=video.get("duration", 0),
