@@ -47,7 +47,11 @@ class Config:
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
     TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
+    # Gemini
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
     # YouTube
+    YOUTUBE_CHANNEL_ID = os.getenv("YOUTUBE_CHANNEL_ID", "UCs_tO31-N62qAD_S7s_H-8w")
     YOUTUBE_PLAYLIST_ID = os.getenv(
         "YOUTUBE_PLAYLIST_ID",
         "PLn2qRQUAAg0zFWTWeuZVo05tUnOGAmWkm"
@@ -77,57 +81,65 @@ class Config:
     # {topics} - optional topics section
 
     REMINDER_MESSAGE_3_DAYS = """
-🔔 *Specter DIY Builder Call #{call_number} in 3 days!*
+🗓️ *Specter DIY Builder Call #{call_number} in 3 Tagen!* 🛠️
 
-On Thursday {date} at 17:00 CET we have our weekly Specter DIY Builder Call.
+Am Donnerstag, den {date} um {hour:02d}:{minute:02d} Uhr MEZ findet unser wöchentlicher Specter DIY Builder Call statt.
 
-Here we discuss PRs and Specter DIY development in any form.
+Wir diskutieren PRs, neue Ideen und alles rund um die Entwicklung von Specter DIY.
 
-Just to let you know, we are livestreaming this call on YouTube.
+Zur Info: Der Call wird live auf YouTube gestreamt. 🎥
 
-Do you have any topics? Reply to this message!
+Hast du Themenvorschläge? Antworte auf diese Nachricht! 💡
 
-📅 Calendar: {calendar_link}
+📅 Kalender: {calendar_link}
 🔗 Jitsi: {jitsi_link}
 """
 
     REMINDER_MESSAGE_1_DAY = """
-🔔 *Tomorrow: Specter DIY Builder Call #{call_number}*
+📢 *Morgen: Specter DIY Builder Call #{call_number}!*
 
-Tomorrow {date} at 17:00 CET (like every week)
+Morgen, am {date} um {hour:02d}:{minute:02d} Uhr MEZ (wie jede Woche).
 
-Here we discuss PRs and Specter DIY development in any form.
+Themen sind unter anderem:
+{topics}
 
-Just to let you know, we are livestreaming this call on YouTube.
+Wir freuen uns auf eure Teilnahme!
 
-Do you have any topics?
-
-📅 Calendar: {calendar_link}
+📅 Kalender: {calendar_link}
 🔗 Jitsi: {jitsi_link}
 """
 
     REMINDER_MESSAGE_1_HOUR = """
-🚀 *Specter DIY Builder Call #{call_number} starts in 1 HOUR!*
+🚀 *Specter DIY Builder Call #{call_number} startet in 1 STUNDE!*
 
-Today at 17:00 CET - join us!
+Heute um {hour:02d}:{minute:02d} Uhr MEZ - sei dabei!
 
 🔗 Jitsi: {jitsi_link}
-📺 YouTube Livestream: https://www.youtube.com/@AnchorWatch
+📺 YouTube Livestream: {youtube_link}
 """
 
     POST_CALL_MESSAGE_TEMPLATE = """
-📺 *Specter DIY Builder Call #{call_number} - Recording Available!*
+✅ *Aufzeichnung verfügbar: Specter DIY Builder Call #{call_number}*
 
-Missed the call or want to watch it again? No problem!
+Call verpasst oder nochmal ansehen? Kein Problem!
 
 🎬 *{title}*
 
-📝 *Summary:*
+📝 *Zusammenfassung (automatisch generiert):*
 {summary}
 
-🔗 *Watch here:* {url}
+🔗 *Hier ansehen:* {url}
 
-See you next week! 👋
+Bis nächste Woche! 👋
+"""
+
+    TOPIC_ANNOUNCEMENT_MESSAGE = """
+📣 *Themen für den Call #{call_number} am Donnerstag*
+
+Wir werden über Folgendes sprechen:
+{topics}
+
+Habt ihr weitere Vorschläge? Lasst es uns wissen! 👇
 """
 
     @classmethod

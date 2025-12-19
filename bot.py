@@ -46,23 +46,33 @@ def get_next_thursday() -> datetime:
     return next_call
 
 
-def format_message(template: str, call_date: Optional[datetime] = None) -> str:
-    """Format a message template with call number, date, and links."""
+def format_message(template: str, call_date: Optional[datetime] = None, topics: list = None) -> str:
+    """Format a message template with call number, date, topics, and links."""
     call_number = get_next_call_number()
 
     if call_date is None:
         call_date = get_next_thursday()
 
+    topic_str = "\n".join(f"• {t}" for t in topics) if topics else "No topics set yet."
+
     return template.format(
         call_number=call_number,
         date=call_date.strftime("%d.%m"),
+        hour=Config.CALL_HOUR,
+        minute=Config.CALL_MINUTE,
+        topics=topic_str,
         calendar_link=Config.CALENDAR_LINK,
         jitsi_link=Config.JITSI_LINK,
+        youtube_link=f"https://www.youtube.com/@{Config.YOUTUBE_CHANNEL_ID}/live"
     )
 
 
-async def send_reminder(bot: Bot, message: str) -> None:
+async def send_reminder(bot: Bot, template: str) -> None:
     """Send a reminder message to the configured chat."""
+    state = load_call_state()
+    topics = state.get("topics", [])
+    message = format_message(template, topics=topics)
+
     try:
         await bot.send_message(
             chat_id=Config.TELEGRAM_CHAT_ID,
@@ -70,7 +80,7 @@ async def send_reminder(bot: Bot, message: str) -> None:
             parse_mode=ParseMode.MARKDOWN,
             disable_web_page_preview=True,
         )
-        logger.info("Reminder sent successfully")
+        logger.info(f"Reminder sent successfully with template: {template[:30]}")
     except Exception as e:
         logger.error(f"Failed to send reminder: {e}")
 
@@ -78,22 +88,19 @@ async def send_reminder(bot: Bot, message: str) -> None:
 async def send_3_day_reminder(bot: Bot) -> None:
     """Send the 3-day reminder."""
     logger.info("Sending 3-day reminder...")
-    message = format_message(Config.REMINDER_MESSAGE_3_DAYS)
-    await send_reminder(bot, message)
+    await send_reminder(bot, Config.REMINDER_MESSAGE_3_DAYS)
 
 
 async def send_1_day_reminder(bot: Bot) -> None:
     """Send the 1-day reminder."""
     logger.info("Sending 1-day reminder...")
-    message = format_message(Config.REMINDER_MESSAGE_1_DAY)
-    await send_reminder(bot, message)
+    await send_reminder(bot, Config.REMINDER_MESSAGE_1_DAY)
 
 
 async def send_1_hour_reminder(bot: Bot) -> None:
     """Send the 1-hour reminder."""
     logger.info("Sending 1-hour reminder...")
-    message = format_message(Config.REMINDER_MESSAGE_1_HOUR)
-    await send_reminder(bot, message)
+    await send_reminder(bot, Config.REMINDER_MESSAGE_1_HOUR)
 
 
 async def check_and_post_new_video(bot: Bot) -> None:
@@ -201,38 +208,65 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     )
 
 
-async def next_call_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /nextcall command."""
+async def nextcall_info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /nextcall command to show info."""
     tz = pytz.timezone(Config.TIMEZONE)
     now = datetime.now(tz)
     next_call = get_next_thursday()
     call_number = get_next_call_number()
+    state = load_call_state()
+    topics = state.get("topics", [])
 
     time_until = next_call - now
     days = time_until.days
     hours = time_until.seconds // 3600
     minutes = (time_until.seconds % 3600) // 60
 
+    topic_str = ""
+    if topics:
+        for i, topic in enumerate(topics):
+            topic_str += f"{i+1}. {topic}\n"
+    else:
+        topic_str = "No topics set yet."
+
     await update.message.reply_text(
-        f"*Next Specter DIY Builder Call #{call_number}*\n\n"
-        f"Date: {next_call.strftime('%A, %d %B %Y')}\n"
-        f"Time: 17:00 CET\n\n"
-        f"In {days} days, {hours} hours and {minutes} minutes\n\n"
-        f"Calendar: {Config.CALENDAR_LINK}\n"
-        f"Jitsi: {Config.JITSI_LINK}",
+        f"🗓️ *Next Specter DIY Builder Call #{call_number}*\n\n"
+        f"📅 *Date*: {next_call.strftime('%A, %d %B %Y')}\n"
+        f"⏰ *Time*: {Config.CALL_HOUR}:{Config.CALL_MINUTE:02d} MEZ\n\n"
+        f"⏳ *Countdown*: {days} days, {hours} hours, {minutes} minutes\n\n"
+        f"📝 *Topics*:\n{topic_str}\n\n"
+        f"🔗 *Jitsi*: {Config.JITSI_LINK}\n"
+        f"📅 *Calendar*: {Config.CALENDAR_LINK}",
         parse_mode=ParseMode.MARKDOWN,
         disable_web_page_preview=True,
     )
 
 
+async def topic_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /topic command to add a topic."""
+    topic = " ".join(context.args)
+    if not topic:
+        await update.message.reply_text(
+            "Please provide a topic after the command, e.g., `/topic New feature discussion`"
+        )
+        return
+
+    state = load_call_state()
+    topics = state.get("topics", [])
+    topics.append(topic)
+    state["topics"] = topics
+    save_call_state(state)
+
+    await update.message.reply_text(f"✅ Topic added: \"{topic}\"")
+
+
 async def latest_video_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /latestvideo command."""
-    await update.message.reply_text("Searching for latest video...")
+    await update.message.reply_text("🔎 Searching for the latest video...")
 
     video = get_latest_video_from_playlist(Config.YOUTUBE_PLAYLIST_ID)
 
     if video:
-        # Use current call number - 1 for the latest video (already posted)
         call_number = get_next_call_number() - 1
         if call_number < 1:
             call_number = 1
@@ -245,31 +279,19 @@ async def latest_video_command(update: Update, context: ContextTypes.DEFAULT_TYP
         )
         await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
     else:
-        await update.message.reply_text("Could not find any video.")
+        await update.message.reply_text("❌ Could not find any video in the playlist.")
 
 
 async def chatid_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /chatid command - useful for setup."""
     chat_id = update.effective_chat.id
-    chat_type = update.effective_chat.type
-    chat_title = update.effective_chat.title or "Private Chat"
-
-    await update.message.reply_text(
-        f"*Chat Information*\n\n"
-        f"Chat ID: `{chat_id}`\n"
-        f"Type: {chat_type}\n"
-        f"Name: {chat_title}\n\n"
-        f"Add this to your `.env` file:\n"
-        f"`TELEGRAM_CHAT_ID={chat_id}`",
-        parse_mode=ParseMode.MARKDOWN,
-    )
+    await update.message.reply_text(f"🔑 Your Chat ID is: `{chat_id}`")
 
 
 async def callnumber_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /callnumber command - show or set call number."""
     call_number = get_next_call_number()
 
-    # Check if a new number was provided
     if context.args and len(context.args) > 0:
         try:
             new_number = int(context.args[0])
@@ -277,71 +299,57 @@ async def callnumber_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 state = load_call_state()
                 state["call_number"] = new_number
                 save_call_state(state)
-                await update.message.reply_text(
-                    f"Call number updated to #{new_number}",
-                    parse_mode=ParseMode.MARKDOWN,
-                )
+                await update.message.reply_text(f"✅ Call number updated to #{new_number}")
                 return
         except ValueError:
-            pass
+            await update.message.reply_text("Invalid number. Please use a positive integer.")
+            return
 
-    await update.message.reply_text(
-        f"*Current Call Number: #{call_number}*\n\n"
-        f"To change it, use:\n"
-        f"`/callnumber <number>`\n\n"
-        f"Example: `/callnumber 10`",
-        parse_mode=ParseMode.MARKDOWN,
-    )
+    await update.message.reply_text(f"🔢 Current call number is #{call_number}.")
 
 
 async def post_video_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /postvideo command - manually trigger video post."""
-    await update.message.reply_text("Posting latest video...")
+    await update.message.reply_text("⏳ Posting latest video...")
     await check_and_post_new_video(context.bot)
 
 
 def setup_scheduler(bot: Bot) -> AsyncIOScheduler:
     """Set up the scheduler for reminders and video checks."""
-    scheduler = AsyncIOScheduler(timezone=Config.TIMEZONE)
+    scheduler = AsyncIOScheduler(timezone=pytz.timezone(Config.TIMEZONE))
 
-    # 3 days before (Monday 17:00)
-    scheduler.add_job(
-        lambda: __import__('asyncio').create_task(send_3_day_reminder(bot)),
-        CronTrigger(day_of_week="mon", hour=17, minute=0),
-        id="reminder_3_days",
-        name="3-day reminder",
-    )
+    # Schedule reminders
+    next_call_time = get_next_thursday()
+    for hours_before in Config.REMINDERS:
+        reminder_time = next_call_time - timedelta(hours=hours_before)
+        job_id = f"reminder_{hours_before}h"
 
-    # 1 day before (Wednesday 17:00)
-    scheduler.add_job(
-        lambda: __import__('asyncio').create_task(send_1_day_reminder(bot)),
-        CronTrigger(day_of_week="wed", hour=17, minute=0),
-        id="reminder_1_day",
-        name="1-day reminder",
-    )
+        if hours_before == 72:
+            job_func = lambda: send_reminder(bot, Config.REMINDER_MESSAGE_3_DAYS)
+        elif hours_before == 24:
+            job_func = lambda: send_reminder(bot, Config.REMINDER_MESSAGE_1_DAY)
+        elif hours_before == 1:
+            job_func = lambda: send_reminder(bot, Config.REMINDER_MESSAGE_1_HOUR)
+        else:
+            continue
 
-    # 1 hour before (Thursday 16:00)
-    scheduler.add_job(
-        lambda: __import__('asyncio').create_task(send_1_hour_reminder(bot)),
-        CronTrigger(day_of_week="thu", hour=16, minute=0),
-        id="reminder_1_hour",
-        name="1-hour reminder",
-    )
+        scheduler.add_job(
+            job_func,
+            "date",
+            run_date=reminder_time,
+            id=job_id,
+            name=f"{hours_before}h reminder",
+        )
 
-    # Check for new videos every Friday at 12:00 (day after the call)
+    # Schedule video check (day after call)
+    video_check_time = next_call_time + timedelta(days=1)
+    video_check_time = video_check_time.replace(hour=12, minute=0)
     scheduler.add_job(
-        lambda: __import__('asyncio').create_task(check_and_post_new_video(bot)),
-        CronTrigger(day_of_week="fri", hour=12, minute=0),
+        lambda: check_and_post_new_video(bot),
+        "date",
+        run_date=video_check_time,
         id="video_check",
         name="Video check",
-    )
-
-    # Also check every 6 hours on Friday and Saturday to catch delayed uploads
-    scheduler.add_job(
-        lambda: __import__('asyncio').create_task(check_and_post_new_video(bot)),
-        CronTrigger(day_of_week="fri,sat", hour="6,18", minute=0),
-        id="video_check_extra",
-        name="Extra video check",
     )
 
     return scheduler
@@ -349,51 +357,36 @@ def setup_scheduler(bot: Bot) -> AsyncIOScheduler:
 
 def main() -> None:
     """Main function to run the bot."""
-    # Validate configuration (allow missing chat_id for setup mode)
     try:
         Config.validate(require_chat_id=False)
     except ValueError as e:
         logger.error(f"Configuration error: {e}")
-        logger.error("Please check your .env file")
         return
 
-    setup_mode = not Config.is_fully_configured()
-    if setup_mode:
-        logger.warning("=" * 50)
-        logger.warning("SETUP MODE: TELEGRAM_CHAT_ID is not configured!")
-        logger.warning("Add bot to your group and send /chatid to get the ID")
-        logger.warning("Then add it to your .env file and restart the bot")
-        logger.warning("=" * 50)
-    else:
-        call_number = get_next_call_number()
-        logger.info(f"Starting Specter DIY Builder Bot (Next call: #{call_number})...")
-
-    # Create application
     application = Application.builder().token(Config.TELEGRAM_BOT_TOKEN).build()
 
     # Add command handlers
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("status", status_command))
-    application.add_handler(CommandHandler("nextcall", next_call_command))
+    application.add_handler(CommandHandler("nextcall", nextcall_info_command))
+    application.add_handler(CommandHandler("topic", topic_command))
     application.add_handler(CommandHandler("latestvideo", latest_video_command))
     application.add_handler(CommandHandler("chatid", chatid_command))
     application.add_handler(CommandHandler("callnumber", callnumber_command))
     application.add_handler(CommandHandler("postvideo", post_video_command))
 
-    # Set up scheduler (only if fully configured)
-    if not setup_mode:
+    if Config.is_fully_configured():
+        logger.info("Bot is fully configured. Starting scheduler...")
         scheduler = setup_scheduler(application.bot)
         scheduler.start()
-        logger.info("Scheduler started")
-
-        # Log scheduled jobs
         for job in scheduler.get_jobs():
-            logger.info(f"Scheduled job: {job.name} - Next run: {job.next_run_time}")
+            logger.info(f"Scheduled job: {job.name} at {job.next_run_time}")
+    else:
+        logger.warning("SETUP MODE: Chat ID not set. Run /chatid in your group.")
 
-    # Start the bot
-    logger.info("Bot is running. Press Ctrl+C to stop.")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    logger.info("Bot is running...")
+    application.run_polling()
 
 
 if __name__ == "__main__":

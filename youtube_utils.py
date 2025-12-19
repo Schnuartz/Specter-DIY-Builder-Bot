@@ -2,10 +2,40 @@
 
 import yt_dlp
 import logging
+import google.generativeai as genai
 from typing import Optional
 from dataclasses import dataclass
 
+from config import Config
+
 logger = logging.getLogger(__name__)
+
+
+def summarize_with_ai(text: str) -> str:
+    """Summarize text using Google's Gemini API."""
+    if not text:
+        return "No content available to summarize."
+
+    if not Config.GEMINI_API_KEY:
+        logger.warning("GEMINI_API_KEY is not configured. Skipping AI summary.")
+        return text[:500].strip() + "..." if len(text) > 500 else text
+
+    try:
+        genai.configure(api_key=Config.GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-pro')
+        prompt = (
+            "You are a helpful assistant for a software development community. "
+            "Your task is to summarize the description of a YouTube video about a technical community call. "
+            "The summary should be concise, in German, and highlight the main topics discussed. "
+            "Focus on technical aspects, pull requests, and new features. Maximum 3-4 bullet points.\n\n"
+            f"Please summarize this:\n\n{text}"
+        )
+        response = model.generate_content(prompt)
+        return response.text.strip()
+
+    except Exception as e:
+        logger.error(f"Error calling Gemini API: {e}")
+        return text[:500].strip() + "..." if len(text) > 500 else text
 
 
 @dataclass
@@ -20,27 +50,8 @@ class VideoInfo:
 
     @property
     def summary(self) -> str:
-        """Extract a summary from the video description."""
-        if not self.description:
-            return "No description available."
-
-        # Take first 500 characters or until double newline
-        desc = self.description.strip()
-
-        # Try to find a natural break point
-        if "\n\n" in desc[:500]:
-            summary = desc[:desc.index("\n\n", 0, 500)]
-        elif len(desc) > 500:
-            # Find last sentence end before 500 chars
-            last_period = desc[:500].rfind(".")
-            if last_period > 100:
-                summary = desc[:last_period + 1]
-            else:
-                summary = desc[:500] + "..."
-        else:
-            summary = desc
-
-        return summary
+        """Generate a summary using AI or fallback to simple extraction."""
+        return summarize_with_ai(self.description)
 
 
 def get_latest_video_from_playlist(playlist_id: str) -> Optional[VideoInfo]:
