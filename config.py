@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Import after Config is needed, so we'll handle circular import carefully
+_youtube_utils = None
+
 # Path for storing call state (number, topics, etc.)
 STATE_FILE = Path(__file__).parent / "call_state.json"
 
@@ -26,7 +29,25 @@ def save_call_state(state: dict) -> None:
 
 
 def get_next_call_number() -> int:
-    """Get the next call number."""
+    """
+    Get the next call number based on playlist size.
+    The next call number = number of videos in playlist + 1
+    """
+    global _youtube_utils
+
+    # Lazy import to avoid circular dependency
+    if _youtube_utils is None:
+        from youtube_utils import get_playlist_video_count
+        _youtube_utils = get_playlist_video_count
+
+    # Get the playlist size from YouTube
+    playlist_id = os.getenv("YOUTUBE_PLAYLIST_ID", "PLn2qRQUAAg0zFWTWeuZVo05tUnOGAmWkm")
+    video_count = _youtube_utils(playlist_id)
+
+    if video_count > 0:
+        return video_count + 1
+
+    # Fallback to state file if playlist fetch fails
     state = load_call_state()
     return state.get("call_number", 9)
 

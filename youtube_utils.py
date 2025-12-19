@@ -140,6 +140,40 @@ def get_video_info(video_id: str) -> Optional[VideoInfo]:
         return None
 
 
+def get_playlist_video_count(playlist_id: str) -> int:
+    """
+    Get the number of videos in a YouTube playlist.
+    This determines the next call number (count + 1).
+
+    Args:
+        playlist_id: The YouTube playlist ID
+
+    Returns:
+        Number of videos in the playlist, or 0 if error
+    """
+    playlist_url = f"https://www.youtube.com/playlist?list={playlist_id}"
+
+    ydl_opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "extract_flat": True,  # Only get metadata, not full video info
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(playlist_url, download=False)
+
+            if not result or "entries" not in result:
+                logger.warning(f"Could not determine playlist size for {playlist_id}")
+                return 0
+
+            return len(list(result["entries"]))
+
+    except Exception as e:
+        logger.error(f"Error fetching playlist size: {e}")
+        return 0
+
+
 if __name__ == "__main__":
     # Test the functions
     logging.basicConfig(level=logging.INFO)
