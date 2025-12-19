@@ -25,10 +25,11 @@ def summarize_with_ai(text: str) -> str:
         model = genai.GenerativeModel('gemini-pro')
         prompt = (
             "You are a helpful assistant for a software development community. "
-            "Your task is to summarize the description of a YouTube video about a technical community call. "
-            "The summary should be concise, in German, and highlight the main topics discussed. "
-            "Focus on technical aspects, pull requests, and new features. Maximum 3-4 bullet points.\n\n"
-            f"Please summarize this:\n\n{text}"
+            "Summarize the description of a YouTube video about a technical community call. "
+            "The summary must be in English, concise, and highlight the main topics discussed. "
+            "Focus on technical aspects, features, and key discussion points. "
+            "Provide MAXIMUM 3-4 bullet points, no more! Be very brief and to the point.\n\n"
+            f"Summarize this:\n\n{text}"
         )
         response = model.generate_content(prompt)
         return response.text.strip()
