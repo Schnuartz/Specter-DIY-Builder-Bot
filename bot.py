@@ -125,10 +125,10 @@ async def check_and_post_new_video(bot: Bot) -> None:
 
     # Post the video
     message = Config.POST_CALL_MESSAGE_TEMPLATE.format(
-        call_number=call_number,
+        call_number=escape_markdown(str(call_number), version=2),
         title=escape_markdown(video.title, version=2),
         summary=escape_markdown(video.summary, version=2),
-        url=video.url,
+        url=escape_markdown(video.url, version=2),
     )
 
     try:
@@ -273,10 +273,10 @@ async def latest_video_command(update: Update, context: ContextTypes.DEFAULT_TYP
             call_number = 1
 
         message = Config.POST_CALL_MESSAGE_TEMPLATE.format(
-            call_number=call_number,
+            call_number=escape_markdown(str(call_number), version=2),
             title=escape_markdown(video.title, version=2),
             summary=escape_markdown(video.summary, version=2),
-            url=video.url,
+            url=escape_markdown(video.url, version=2),
         )
         await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN_V2)
     else:
