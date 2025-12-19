@@ -27,11 +27,13 @@ python3 -m venv venv
 # Create .env file from instance metadata
 TELEGRAM_BOT_TOKEN=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/attributes/telegram-bot-token" -H "Metadata-Flavor: Google")
 TELEGRAM_CHAT_ID=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/attributes/telegram-chat-id" -H "Metadata-Flavor: Google")
+GEMINI_API_KEY=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/attributes/gemini-api-key" -H "Metadata-Flavor: Google")
 
 cat > .env << EOF
 TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
 TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
 YOUTUBE_PLAYLIST_ID=PLn2qRQUAAg0zFWTWeuZVo05tUnOGAmWkm
+GEMINI_API_KEY=${GEMINI_API_KEY}
 EOF
 
 # Set ownership
