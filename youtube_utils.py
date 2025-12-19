@@ -25,10 +25,14 @@ def summarize_with_ai(text: str) -> str:
         model = genai.GenerativeModel('gemini-2.5-flash')
         prompt = (
             "You are a helpful assistant for a software development community. "
-            "Summarize the description of a YouTube video about a technical community call. "
-            "The summary must be in English, concise, and highlight the main topics discussed. "
-            "Focus on technical aspects, features, and key discussion points. "
-            "Provide MAXIMUM 3-4 bullet points, no more! Be very brief and to the point.\n\n"
+            "Create a VERY SHORT summary of a YouTube video description for a technical community call. "
+            "IMPORTANT RULES:\n"
+            "- Use EXACTLY 3 bullet points, no more, no less\n"
+            "- Each bullet point must be ONE sentence only\n"
+            "- DO NOT use bold formatting (**text**) or colons in bullet points\n"
+            "- Be extremely concise - focus only on the main technical topics\n"
+            "- Use simple format: * Main topic and brief description\n"
+            "- Ignore secondary details like links or resources\n\n"
             f"Summarize this:\n\n{text}"
         )
         response = model.generate_content(prompt)
