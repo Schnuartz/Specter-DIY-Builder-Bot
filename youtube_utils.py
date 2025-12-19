@@ -22,7 +22,7 @@ def summarize_with_ai(text: str) -> str:
 
     try:
         genai.configure(api_key=Config.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         prompt = (
             "You are a helpful assistant for a software development community. "
             "Summarize the description of a YouTube video about a technical community call. "
