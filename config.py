@@ -141,27 +141,27 @@ Heute um {hour:02d}:{minute:02d} Uhr MEZ - sei dabei!
 """
 
     POST_CALL_MESSAGE_TEMPLATE = """
-✅ *Aufzeichnung verfügbar: Specter DIY Builder Call #{call_number}*
+✅ *Aufzeichnung verfügbar: Specter DIY Builder Call \\#{call_number}*
 
-Call verpasst oder nochmal ansehen? Kein Problem!
+Call verpasst oder nochmal ansehen? Kein Problem\\!
 
 🎬 *{title}*
 
-📝 *Zusammenfassung (automatisch generiert):*
+📝 *Zusammenfassung \\(automatisch generiert\\):*
 {summary}
 
 🔗 *Hier ansehen:* {url}
 
-Bis nächste Woche! 👋
+Bis nächste Woche\\! 👋
 """
 
     TOPIC_ANNOUNCEMENT_MESSAGE = """
-📣 *Themen für den Call #{call_number} am Donnerstag*
+📣 *Themen für den Call \\#{call_number} am Donnerstag*
 
 Wir werden über Folgendes sprechen:
 {topics}
 
-Habt ihr weitere Vorschläge? Lasst es uns wissen! 👇
+Habt ihr weitere Vorschläge\\? Lasst es uns wissen\\! 👇
 """
 
     @classmethod
