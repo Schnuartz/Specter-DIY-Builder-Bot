@@ -170,27 +170,55 @@ def get_call_number_from_title(title: str) -> Optional[int]:
     return None
 
 
-def get_latest_call_number(playlist_id: str) -> int:
+def get_latest_call_number(playlist_id: str, timeout: int = 5) -> int:
     """
     Get the call number from the latest video in the playlist.
     The next call number = latest call number + 1.
 
     Args:
         playlist_id: The YouTube playlist ID
+        timeout: Timeout for yt-dlp in seconds (to avoid hanging)
 
     Returns:
         Next call number (latest + 1), or 1 as fallback
     """
-    video = get_latest_video_from_playlist(playlist_id)
+    try:
+        playlist_url = f"https://www.youtube.com/playlist?list={playlist_id}"
 
-    if video:
-        call_num = get_call_number_from_title(video.title)
-        if call_num is not None:
-            logger.info(f"Found call number {call_num} in latest video: {video.title}")
-            return call_num + 1
+        ydl_opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "extract_flat": False,
+            "playlistend": 1,
+            "socket_timeout": timeout,
+        }
 
-    logger.warning(f"Could not extract call number from playlist {playlist_id}")
-    return 1
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(playlist_url, download=False)
+
+            if not result or "entries" not in result:
+                logger.warning(f"Could not fetch latest video from playlist {playlist_id}")
+                return 1
+
+            entries = list(result["entries"])
+            if not entries:
+                logger.warning(f"Playlist {playlist_id} is empty")
+                return 1
+
+            video = entries[0]
+            title = video.get("title", "")
+            call_num = get_call_number_from_title(title)
+
+            if call_num is not None:
+                logger.info(f"Found call number {call_num} in latest video: {title}")
+                return call_num + 1
+
+            logger.warning(f"Could not extract call number from title: {title}")
+            return 1
+
+    except Exception as e:
+        logger.warning(f"Error fetching playlist call number: {e}")
+        return 1
 
 
 if __name__ == "__main__":
