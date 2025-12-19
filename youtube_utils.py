@@ -140,38 +140,57 @@ def get_video_info(video_id: str) -> Optional[VideoInfo]:
         return None
 
 
-def get_playlist_video_count(playlist_id: str) -> int:
+def get_call_number_from_title(title: str) -> Optional[int]:
     """
-    Get the number of videos in a YouTube playlist.
-    This determines the next call number (count + 1).
+    Extract the call number from a video title.
+    Looks for pattern like "Call #10" or "#10" in the title.
+
+    Args:
+        title: The YouTube video title
+
+    Returns:
+        Call number as integer, or None if not found
+    """
+    import re
+
+    # Try patterns: "Call #10", "#10", "Call #10:"
+    patterns = [
+        r'Call\s+#(\d+)',
+        r'#(\d+)',
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, title)
+        if match:
+            try:
+                return int(match.group(1))
+            except (ValueError, IndexError):
+                continue
+
+    return None
+
+
+def get_latest_call_number(playlist_id: str) -> int:
+    """
+    Get the call number from the latest video in the playlist.
+    The next call number = latest call number + 1.
 
     Args:
         playlist_id: The YouTube playlist ID
 
     Returns:
-        Number of videos in the playlist, or 0 if error
+        Next call number (latest + 1), or 1 as fallback
     """
-    playlist_url = f"https://www.youtube.com/playlist?list={playlist_id}"
+    video = get_latest_video_from_playlist(playlist_id)
 
-    ydl_opts = {
-        "quiet": True,
-        "no_warnings": True,
-        "extract_flat": True,  # Only get metadata, not full video info
-    }
+    if video:
+        call_num = get_call_number_from_title(video.title)
+        if call_num is not None:
+            logger.info(f"Found call number {call_num} in latest video: {video.title}")
+            return call_num + 1
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(playlist_url, download=False)
-
-            if not result or "entries" not in result:
-                logger.warning(f"Could not determine playlist size for {playlist_id}")
-                return 0
-
-            return len(list(result["entries"]))
-
-    except Exception as e:
-        logger.error(f"Error fetching playlist size: {e}")
-        return 0
+    logger.warning(f"Could not extract call number from playlist {playlist_id}")
+    return 1
 
 
 if __name__ == "__main__":

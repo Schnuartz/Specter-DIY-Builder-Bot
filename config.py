@@ -30,26 +30,27 @@ def save_call_state(state: dict) -> None:
 
 def get_next_call_number() -> int:
     """
-    Get the next call number based on playlist size.
-    The next call number = number of videos in playlist + 1
+    Get the next call number from the latest video in the playlist.
+    Extracts the call number from the video title (e.g., "Call #10").
+    The next call number = latest call number + 1.
     """
     global _youtube_utils
 
     # Lazy import to avoid circular dependency
     if _youtube_utils is None:
-        from youtube_utils import get_playlist_video_count
-        _youtube_utils = get_playlist_video_count
+        from youtube_utils import get_latest_call_number
+        _youtube_utils = get_latest_call_number
 
-    # Get the playlist size from YouTube
+    # Get the call number from the latest playlist video
     playlist_id = os.getenv("YOUTUBE_PLAYLIST_ID", "PLn2qRQUAAg0zFWTWeuZVo05tUnOGAmWkm")
-    video_count = _youtube_utils(playlist_id)
+    next_call = _youtube_utils(playlist_id)
 
-    if video_count > 0:
-        return video_count + 1
+    if next_call > 0:
+        return next_call
 
     # Fallback to state file if playlist fetch fails
     state = load_call_state()
-    return state.get("call_number", 9)
+    return state.get("call_number", 1)
 
 
 def increment_call_number() -> int:
