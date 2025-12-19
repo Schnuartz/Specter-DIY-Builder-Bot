@@ -17,6 +17,7 @@ from apscheduler.triggers.cron import CronTrigger
 from telegram import Bot, Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 from telegram.constants import ParseMode
+from telegram.helpers import escape_markdown
 
 from config import Config, get_next_call_number, increment_call_number, load_call_state, save_call_state
 from youtube_utils import get_latest_video_from_playlist
@@ -125,8 +126,8 @@ async def check_and_post_new_video(bot: Bot) -> None:
     # Post the video
     message = Config.POST_CALL_MESSAGE_TEMPLATE.format(
         call_number=call_number,
-        title=video.title,
-        summary=video.summary,
+        title=escape_markdown(video.title, version=2),
+        summary=escape_markdown(video.summary, version=2),
         url=video.url,
     )
 
@@ -134,7 +135,7 @@ async def check_and_post_new_video(bot: Bot) -> None:
         await bot.send_message(
             chat_id=Config.TELEGRAM_CHAT_ID,
             text=message,
-            parse_mode=ParseMode.MARKDOWN,
+            parse_mode=ParseMode.MARKDOWN_V2,
             disable_web_page_preview=False,
         )
         last_posted_video_id = video.video_id
@@ -273,11 +274,11 @@ async def latest_video_command(update: Update, context: ContextTypes.DEFAULT_TYP
 
         message = Config.POST_CALL_MESSAGE_TEMPLATE.format(
             call_number=call_number,
-            title=video.title,
-            summary=video.summary,
+            title=escape_markdown(video.title, version=2),
+            summary=escape_markdown(video.summary, version=2),
             url=video.url,
         )
-        await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
+        await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN_V2)
     else:
         await update.message.reply_text("❌ Could not find any video in the playlist.")
 
