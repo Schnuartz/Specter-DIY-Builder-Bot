@@ -55,12 +55,13 @@ class VideoInfo:
         return summarize_with_ai(self.description)
 
 
-def get_latest_video_from_playlist(playlist_id: str) -> Optional[VideoInfo]:
+def get_latest_video_from_playlist(playlist_id: str, timeout: int = 10) -> Optional[VideoInfo]:
     """
     Fetch the latest video from a YouTube playlist.
 
     Args:
         playlist_id: The YouTube playlist ID
+        timeout: Timeout in seconds (default 10s)
 
     Returns:
         VideoInfo object or None if failed
@@ -72,6 +73,7 @@ def get_latest_video_from_playlist(playlist_id: str) -> Optional[VideoInfo]:
         "no_warnings": True,
         "extract_flat": False,
         "playlistend": 1,  # Only get the first (latest) video
+        "socket_timeout": timeout,
     }
 
     try:
