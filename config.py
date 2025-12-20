@@ -112,41 +112,41 @@ class Config:
     # {topics} - optional topics section
 
     REMINDER_MESSAGE_3_DAYS = """
-🗓️ *Specter DIY Builder Call #{call_number} in 3 Days!* 🛠️
+🗓️ *Specter DIY Builder Call #{call_number} in 3 Days\\!* 🛠️
 
-Our weekly Specter DIY Builder Call takes place on {date} at {hour:02d}:{minute:02d} CET.
+Our weekly Specter DIY Builder Call takes place on {date} at {hour:02d}:{minute:02d} CET\.
 
-We discuss PRs, new ideas, and everything about Specter DIY development.
+We discuss PRs, new ideas, and everything about Specter DIY development\.
 
 📝 *Planned Topics:*
 {topics}
 
-Note: The call will be livestreamed on YouTube. 🎥
+Note: The call will be livestreamed on YouTube\. 🎥
 
-Have topic suggestions? Use `/topic <your topic>` or forward a message to the bot! 💡
+Have topic suggestions\\? Use `/topic <your topic>` or forward a message to the bot\\! 💡
 
 📅 [Calendar]({calendar_link})
 🔗 [Jitsi]({jitsi_link})
 """
 
     REMINDER_MESSAGE_1_DAY = """
-📢 *Tomorrow: Specter DIY Builder Call #{call_number}!*
+📢 *Tomorrow: Specter DIY Builder Call #{call_number}\\!*
 
-Tomorrow at {hour:02d}:{minute:02d} CET (as every week).
+Tomorrow at {hour:02d}:{minute:02d} CET \(as every week\)\.
 
 Topics include:
 {topics}
 
-We look forward to your participation!
+We look forward to your participation\\!
 
 📅 [Calendar]({calendar_link})
 🔗 [Jitsi]({jitsi_link})
 """
 
     REMINDER_MESSAGE_1_HOUR = """
-🚀 *Specter DIY Builder Call #{call_number} starts in 1 HOUR!*
+🚀 *Specter DIY Builder Call #{call_number} starts in 1 HOUR\\!*
 
-Today at {hour:02d}:{minute:02d} CET - join us!
+Today at {hour:02d}:{minute:02d} CET \- join us\\!
 
 📝 *Topics:*
 {topics}
