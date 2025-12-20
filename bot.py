@@ -306,6 +306,7 @@ async def nextcall_info_command(update: Update, context: ContextTypes.DEFAULT_TY
     hours = time_until.seconds // 3600
     minutes = (time_until.seconds % 3600) // 60
 
+    # Format topics - use AI summarization if topics exist
     if topics:
         from youtube_utils import format_topics_with_ai
         topic_str = format_topics_with_ai(topics, call_number)
@@ -317,11 +318,12 @@ async def nextcall_info_command(update: Update, context: ContextTypes.DEFAULT_TY
     await update.message.reply_text(
         f"🗓️ *Next Specter DIY Builder Call #{call_number}*\n\n"
         f"📅 *Date*: {next_call.strftime('%A, %d %B %Y')}\n"
-        f"⏰ *Time*: {Config.CALL_HOUR}:{Config.CALL_MINUTE:02d} MEZ\n\n"
+        f"⏰ *Time*: {Config.CALL_HOUR}:{Config.CALL_MINUTE:02d} CET\n\n"
         f"⏳ *Countdown*: {days} days, {hours} hours, {minutes} minutes\n\n"
         f"📝 *Topics*:\n{topic_str}\n\n"
-        f"🔗 *Jitsi*: {Config.JITSI_LINK}\n"
-        f"📅 *Calendar*: {calendar_link}",
+        f"🔗 *Join the Call*:\n"
+        f"• Jitsi: {Config.JITSI_LINK}\n"
+        f"• Calendar: {calendar_link}",
         parse_mode=ParseMode.MARKDOWN,
         disable_web_page_preview=True,
     )
