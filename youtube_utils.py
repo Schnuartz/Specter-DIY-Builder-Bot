@@ -43,6 +43,57 @@ def summarize_with_ai(text: str) -> str:
         return text[:500].strip() + "..." if len(text) > 500 else text
 
 
+def format_topics_with_ai(topics: list, call_number: int) -> str:
+    """Format topics list into engaging English announcement text using Gemini AI.
+
+    Args:
+        topics: List of topic strings
+        call_number: The call number for context
+
+    Returns:
+        Engaging English text about the topics, or fallback bullet points
+    """
+    if not topics:
+        return "No topics set yet."
+
+    if not Config.GEMINI_API_KEY:
+        logger.warning("GEMINI_API_KEY not configured. Using simple format.")
+        return "\n".join(f"• {t}" for t in topics)
+
+    try:
+        genai.configure(api_key=Config.GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-2.5-flash')
+
+        topics_text = "\n".join(f"- {t}" for t in topics)
+
+        prompt = (
+            f"You are a community manager for the Specter DIY Builder Community. "
+            f"Create a SHORT, ENGAGING English announcement text for Call #{call_number}.\n\n"
+            f"IMPORTANT RULES:\n"
+            f"- Write 2-3 sentences in English\n"
+            f"- Make people excited about the call - be inviting and enthusiastic\n"
+            f"- Incorporate the topics NATURALLY into the text (NOT as bullet points!)\n"
+            f"- Use a friendly, community-oriented tone (professional but warm)\n"
+            f"- No headings or formatting - just flowing text\n"
+            f"- Be concise but inviting\n\n"
+            f"Topics to be discussed:\n{topics_text}\n\n"
+            f"Create the announcement text now:"
+        )
+
+        response = model.generate_content(prompt)
+        result = response.text.strip()
+
+        # Remove markdown formatting if Gemini adds it
+        result = result.replace("**", "").replace("*", "")
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error calling Gemini API for topics: {e}")
+        # Fallback to simple bullet points
+        return "\n".join(f"• {t}" for t in topics)
+
+
 @dataclass
 class VideoInfo:
     """Information about a YouTube video."""

@@ -19,7 +19,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandl
 from telegram.constants import ParseMode
 from telegram.helpers import escape_markdown
 
-from config import Config, get_next_call_number, increment_call_number, load_call_state, save_call_state
+from config import Config, get_next_call_number, increment_call_number, load_call_state, save_call_state, invalidate_topics_cache
 from youtube_utils import get_latest_video_from_playlist
 
 # Configure logging
@@ -47,14 +47,75 @@ def get_next_thursday() -> datetime:
     return next_call
 
 
-def format_message(template: str, call_date: Optional[datetime] = None, topics: list = None) -> str:
-    """Format a message template with call number, date, topics, and links."""
+def get_calendar_link_for_call(call_date: datetime) -> str:
+    """Generate a Google Calendar link for a specific call date.
+
+    Args:
+        call_date: The datetime of the call (Thursday 17:00 CET)
+
+    Returns:
+        Google Calendar template URL for adding the event
+    """
+    from urllib.parse import urlencode
+
+    # Format dates for Google Calendar (YYYYMMDDTHHMMSSZ in UTC)
+    # Call is 17:00 CET = 16:00 UTC (or 15:00 UTC in summer)
+    start_utc = call_date.astimezone(pytz.UTC)
+    end_utc = start_utc + timedelta(hours=2)  # 2-hour call
+
+    start_str = start_utc.strftime("%Y%m%dT%H%M%SZ")
+    end_str = end_utc.strftime("%Y%m%dT%H%M%SZ")
+
+    # Build Google Calendar template URL
+    params = {
+        "action": "TEMPLATE",
+        "text": "Specter DIY Builder Call",
+        "dates": f"{start_str}/{end_str}",
+        "details": "Weekly Specter DIY Builder community call. Discuss PRs, new ideas, and development.",
+        "location": Config.JITSI_LINK,
+    }
+
+    query = urlencode(params)
+    return f"https://calendar.google.com/calendar/render?{query}"
+
+
+def format_message(template: str, call_date: Optional[datetime] = None, topics: list = None, use_ai_topics: bool = True) -> str:
+    """Format a message template with call number, date, topics, and links.
+
+    Args:
+        template: Message template string
+        call_date: Date of the call (defaults to next Thursday)
+        topics: List of topic strings
+        use_ai_topics: Whether to format topics with AI (default True)
+    """
     call_number = get_next_call_number()
 
     if call_date is None:
         call_date = get_next_thursday()
 
-    topic_str = "\n".join(f"• {t}" for t in topics) if topics else "No topics set yet."
+    # Format topics
+    if topics:
+        if use_ai_topics:
+            # Check cache first
+            state = load_call_state()
+            cached = state.get("topics_formatted_cache")
+
+            if cached:
+                topic_str = cached
+            else:
+                # Generate with AI and cache
+                from youtube_utils import format_topics_with_ai
+                topic_str = format_topics_with_ai(topics, call_number)
+                state["topics_formatted_cache"] = topic_str
+                save_call_state(state)
+        else:
+            # Simple bullet points
+            topic_str = "\n".join(f"• {t}" for t in topics)
+    else:
+        topic_str = "No topics set yet."
+
+    # Generate dynamic calendar link
+    calendar_link = get_calendar_link_for_call(call_date)
 
     return template.format(
         call_number=call_number,
@@ -62,7 +123,7 @@ def format_message(template: str, call_date: Optional[datetime] = None, topics: 
         hour=Config.CALL_HOUR,
         minute=Config.CALL_MINUTE,
         topics=topic_str,
-        calendar_link=Config.CALENDAR_LINK,
+        calendar_link=calendar_link,
         jitsi_link=Config.JITSI_LINK,
         youtube_link=f"https://www.youtube.com/@{Config.YOUTUBE_CHANNEL_ID}/live"
     )
@@ -245,12 +306,13 @@ async def nextcall_info_command(update: Update, context: ContextTypes.DEFAULT_TY
     hours = time_until.seconds // 3600
     minutes = (time_until.seconds % 3600) // 60
 
-    topic_str = ""
     if topics:
-        for i, topic in enumerate(topics):
-            topic_str += f"{i+1}. {topic}\n"
+        from youtube_utils import format_topics_with_ai
+        topic_str = format_topics_with_ai(topics, call_number)
     else:
         topic_str = "No topics set yet."
+
+    calendar_link = get_calendar_link_for_call(next_call)
 
     await update.message.reply_text(
         f"🗓️ *Next Specter DIY Builder Call #{call_number}*\n\n"
@@ -259,7 +321,7 @@ async def nextcall_info_command(update: Update, context: ContextTypes.DEFAULT_TY
         f"⏳ *Countdown*: {days} days, {hours} hours, {minutes} minutes\n\n"
         f"📝 *Topics*:\n{topic_str}\n\n"
         f"🔗 *Jitsi*: {Config.JITSI_LINK}\n"
-        f"📅 *Calendar*: {Config.CALENDAR_LINK}",
+        f"📅 *Calendar*: {calendar_link}",
         parse_mode=ParseMode.MARKDOWN,
         disable_web_page_preview=True,
     )
@@ -287,6 +349,7 @@ async def topic_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     topics.append(topic)
     state["topics"] = topics
     save_call_state(state)
+    invalidate_topics_cache()
 
     await update.message.reply_text(f"✅ Topic added: \"{topic}\"")
 
@@ -335,6 +398,7 @@ async def handle_forwarded_message(update: Update, context: ContextTypes.DEFAULT
     topics.append(topic_text)
     state["topics"] = topics
     save_call_state(state)
+    invalidate_topics_cache()
 
     await message.reply_text(
         f"✅ Forwarded message added as topic:\n\n\"{topic_text[:100]}{'...' if len(topic_text) > 100 else ''}\""

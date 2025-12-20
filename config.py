@@ -58,8 +58,17 @@ def increment_call_number() -> int:
     state = load_call_state()
     state["call_number"] = state.get("call_number", 9) + 1
     state["topics"] = []  # Reset topics for next call
+    state["topics_formatted_cache"] = None  # Clear cache for next call
     save_call_state(state)
     return state["call_number"]
+
+
+def invalidate_topics_cache() -> None:
+    """Clear the AI-formatted topics cache when topics are modified."""
+    state = load_call_state()
+    if "topics_formatted_cache" in state:
+        del state["topics_formatted_cache"]
+        save_call_state(state)
 
 
 class Config:
@@ -81,7 +90,7 @@ class Config:
     YOUTUBE_PLAYLIST_URL = f"https://www.youtube.com/playlist?list={YOUTUBE_PLAYLIST_ID}"
 
     # Call Links
-    CALENDAR_LINK = "https://calendar.app.google/7cWw2rLLFhrBMhtF8"
+    # Calendar link is now generated dynamically in bot.py
     JITSI_LINK = "https://meet.jit.si/SpecterBuilderCall"
 
     # Schedule (Thursday 17:00 CET)
@@ -103,43 +112,43 @@ class Config:
     # {topics} - optional topics section
 
     REMINDER_MESSAGE_3_DAYS = """
-🗓️ *Specter DIY Builder Call #{call_number} in 3 Tagen!* 🛠️
+🗓️ *Specter DIY Builder Call #{call_number} in 3 Days!* 🛠️
 
-Am Donnerstag, den {date} um {hour:02d}:{minute:02d} Uhr MEZ findet unser wöchentlicher Specter DIY Builder Call statt.
+Our weekly Specter DIY Builder Call takes place on {date} at {hour:02d}:{minute:02d} CET.
 
-Wir diskutieren PRs, neue Ideen und alles rund um die Entwicklung von Specter DIY.
+We discuss PRs, new ideas, and everything about Specter DIY development.
 
-📝 *Geplante Themen:*
+📝 *Planned Topics:*
 {topics}
 
-Zur Info: Der Call wird live auf YouTube gestreamt. 🎥
+Note: The call will be livestreamed on YouTube. 🎥
 
-Hast du weitere Themenvorschläge? Nutze `/topic <dein Thema>` oder leite eine Nachricht an den Bot weiter! 💡
+Have topic suggestions? Use `/topic <your topic>` or forward a message to the bot! 💡
 
-📅 Kalender: {calendar_link}
+📅 Calendar: {calendar_link}
 🔗 Jitsi: {jitsi_link}
 """
 
     REMINDER_MESSAGE_1_DAY = """
-📢 *Morgen: Specter DIY Builder Call #{call_number}!*
+📢 *Tomorrow: Specter DIY Builder Call #{call_number}!*
 
-Morgen, am {date} um {hour:02d}:{minute:02d} Uhr MEZ (wie jede Woche).
+Tomorrow at {hour:02d}:{minute:02d} CET (as every week).
 
-Themen sind unter anderem:
+Topics include:
 {topics}
 
-Wir freuen uns auf eure Teilnahme!
+We look forward to your participation!
 
-📅 Kalender: {calendar_link}
+📅 Calendar: {calendar_link}
 🔗 Jitsi: {jitsi_link}
 """
 
     REMINDER_MESSAGE_1_HOUR = """
-🚀 *Specter DIY Builder Call #{call_number} startet in 1 STUNDE!*
+🚀 *Specter DIY Builder Call #{call_number} starts in 1 HOUR!*
 
-Heute um {hour:02d}:{minute:02d} Uhr MEZ - sei dabei!
+Today at {hour:02d}:{minute:02d} CET - join us!
 
-📝 *Themen:*
+📝 *Topics:*
 {topics}
 
 🔗 Jitsi: {jitsi_link}
