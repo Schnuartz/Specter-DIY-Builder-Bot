@@ -322,8 +322,8 @@ async def nextcall_info_command(update: Update, context: ContextTypes.DEFAULT_TY
         f"⏳ *Countdown*: {days} days, {hours} hours, {minutes} minutes\n\n"
         f"📝 *Topics*:\n{topic_str}\n\n"
         f"🔗 *Join the Call*:\n"
-        f"• Jitsi: {Config.JITSI_LINK}\n"
-        f"• Calendar: {calendar_link}",
+        f"• [Jitsi]({Config.JITSI_LINK})\n"
+        f"• [Calendar]({calendar_link})",
         parse_mode=ParseMode.MARKDOWN,
         disable_web_page_preview=True,
     )

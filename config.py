@@ -125,8 +125,8 @@ Note: The call will be livestreamed on YouTube. 🎥
 
 Have topic suggestions? Use `/topic <your topic>` or forward a message to the bot! 💡
 
-📅 Calendar: {calendar_link}
-🔗 Jitsi: {jitsi_link}
+📅 [Calendar]({calendar_link})
+🔗 [Jitsi]({jitsi_link})
 """
 
     REMINDER_MESSAGE_1_DAY = """
@@ -139,8 +139,8 @@ Topics include:
 
 We look forward to your participation!
 
-📅 Calendar: {calendar_link}
-🔗 Jitsi: {jitsi_link}
+📅 [Calendar]({calendar_link})
+🔗 [Jitsi]({jitsi_link})
 """
 
     REMINDER_MESSAGE_1_HOUR = """
@@ -151,8 +151,8 @@ Today at {hour:02d}:{minute:02d} CET - join us!
 📝 *Topics:*
 {topics}
 
-🔗 Jitsi: {jitsi_link}
-📺 YouTube Livestream: {youtube_link}
+🔗 [Jitsi]({jitsi_link})
+📺 [YouTube Livestream]({youtube_link})
 """
 
     POST_CALL_MESSAGE_TEMPLATE = """
