@@ -15,7 +15,7 @@ import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from telegram import Bot, Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 from telegram.constants import ParseMode
 from telegram.helpers import escape_markdown
 
@@ -66,6 +66,27 @@ def format_message(template: str, call_date: Optional[datetime] = None, topics: 
         jitsi_link=Config.JITSI_LINK,
         youtube_link=f"https://www.youtube.com/@{Config.YOUTUBE_CHANNEL_ID}/live"
     )
+
+
+async def is_user_admin(bot: Bot, user_id: int) -> bool:
+    """Check if a user is an admin in the configured Telegram group.
+
+    Args:
+        bot: The Bot instance
+        user_id: Telegram user ID to check
+
+    Returns:
+        True if user is admin or creator, False otherwise
+    """
+    try:
+        chat_member = await bot.get_chat_member(
+            chat_id=Config.TELEGRAM_CHAT_ID,
+            user_id=user_id
+        )
+        return chat_member.status in ["creator", "administrator"]
+    except Exception as e:
+        logger.error(f"Failed to check admin status for user {user_id}: {e}")
+        return False
 
 
 async def send_reminder(bot: Bot, template: str) -> None:
@@ -182,6 +203,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "`/help` - You are here.\n"
         "`/status` - Shows if I'm running correctly and the current time.\n"
         "`/nextcall` - Displays the date, time, and a countdown to the next call.\n"
+        "`/topic <text>` - (Admin) Add a topic for the next call. You can also forward messages to the bot to add them as topics.\n"
         "`/latestvideo` - Fetches and displays the most recent video from the playlist.\n"
         "`/postvideo` - (Admin) Manually triggers posting the latest video.\n"
         "`/callnumber [number]` - Shows the current call number. An admin can also set a new one (e.g., `/callnumber 42`).\n"
@@ -244,7 +266,15 @@ async def nextcall_info_command(update: Update, context: ContextTypes.DEFAULT_TY
 
 
 async def topic_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /topic command to add a topic."""
+    """Handle /topic command to add a topic (admin only)."""
+    # Check if user is admin
+    user_id = update.effective_user.id
+    if not await is_user_admin(context.bot, user_id):
+        await update.message.reply_text(
+            "❌ Only group administrators can add topics."
+        )
+        return
+
     topic = " ".join(context.args)
     if not topic:
         await update.message.reply_text(
@@ -259,6 +289,57 @@ async def topic_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     save_call_state(state)
 
     await update.message.reply_text(f"✅ Topic added: \"{topic}\"")
+
+
+async def handle_forwarded_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle forwarded messages - add them as topics if sender is admin.
+
+    Admins can forward messages from the group to the bot (in DM or group),
+    and the forwarded message text will be added as a topic for the next call.
+    """
+    message = update.message
+
+    # Only process if message was forwarded
+    if not message.forward_date:
+        return
+
+    # Check if user is admin
+    user_id = update.effective_user.id
+    if not await is_user_admin(context.bot, user_id):
+        await message.reply_text(
+            "❌ Only group administrators can add topics via forwarded messages."
+        )
+        return
+
+    # Extract text from forwarded message
+    topic_text = None
+
+    if message.text:
+        topic_text = message.text
+    elif message.caption:
+        topic_text = message.caption
+    else:
+        await message.reply_text(
+            "❌ Could not extract text from forwarded message. "
+            "Please forward messages with text or captions."
+        )
+        return
+
+    # Limit topic length to avoid spam
+    if len(topic_text) > 500:
+        topic_text = topic_text[:500] + "..."
+
+    # Add topic to state
+    state = load_call_state()
+    topics = state.get("topics", [])
+    topics.append(topic_text)
+    state["topics"] = topics
+    save_call_state(state)
+
+    await message.reply_text(
+        f"✅ Forwarded message added as topic:\n\n\"{topic_text[:100]}{'...' if len(topic_text) > 100 else ''}\""
+    )
+    logger.info(f"Topic added from forwarded message by user {user_id}: {topic_text[:50]}")
 
 
 async def latest_video_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -376,6 +457,14 @@ def main() -> None:
     application.add_handler(CommandHandler("chatid", chatid_command))
     application.add_handler(CommandHandler("callnumber", callnumber_command))
     application.add_handler(CommandHandler("postvideo", post_video_command))
+
+    # Add message handler for forwarded messages
+    application.add_handler(
+        MessageHandler(
+            filters.FORWARDED & (filters.TEXT | filters.CAPTION),
+            handle_forwarded_message
+        )
+    )
 
     if Config.is_fully_configured():
         logger.info("Bot is fully configured. Starting scheduler...")

@@ -109,9 +109,12 @@ Am Donnerstag, den {date} um {hour:02d}:{minute:02d} Uhr MEZ findet unser wöche
 
 Wir diskutieren PRs, neue Ideen und alles rund um die Entwicklung von Specter DIY.
 
+📝 *Geplante Themen:*
+{topics}
+
 Zur Info: Der Call wird live auf YouTube gestreamt. 🎥
 
-Hast du Themenvorschläge? Antworte auf diese Nachricht! 💡
+Hast du weitere Themenvorschläge? Nutze `/topic <dein Thema>` oder leite eine Nachricht an den Bot weiter! 💡
 
 📅 Kalender: {calendar_link}
 🔗 Jitsi: {jitsi_link}
@@ -135,6 +138,9 @@ Wir freuen uns auf eure Teilnahme!
 🚀 *Specter DIY Builder Call #{call_number} startet in 1 STUNDE!*
 
 Heute um {hour:02d}:{minute:02d} Uhr MEZ - sei dabei!
+
+📝 *Themen:*
+{topics}
 
 🔗 Jitsi: {jitsi_link}
 📺 YouTube Livestream: {youtube_link}
