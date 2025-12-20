@@ -123,10 +123,10 @@ We discuss PRs, new ideas, and everything about Specter DIY development.
 
 Note: The call will be livestreamed on YouTube. 🎥
 
-Have topic suggestions? Use /topic <your topic> or forward a message to the bot!
+Have topic suggestions? Use /topic &lt;your topic&gt; or forward a message to the bot!
 
-📅 Calendar: {calendar_link}
-🔗 Jitsi: {jitsi_link}
+📅 <a href="{calendar_link}">Calendar</a>
+🔗 <a href="{jitsi_link}">Jitsi</a>
 """
 
     REMINDER_MESSAGE_1_DAY = """
@@ -139,8 +139,8 @@ Topics include:
 
 We look forward to your participation!
 
-📅 Calendar: {calendar_link}
-🔗 Jitsi: {jitsi_link}
+📅 <a href="{calendar_link}">Calendar</a>
+🔗 <a href="{jitsi_link}">Jitsi</a>
 """
 
     REMINDER_MESSAGE_1_HOUR = """
@@ -151,8 +151,8 @@ Today at {hour:02d}:{minute:02d} CET - join us!
 📝 Topics:
 {topics}
 
-🔗 Jitsi: {jitsi_link}
-📺 YouTube Livestream: {youtube_link}
+🔗 <a href="{jitsi_link}">Jitsi</a>
+📺 <a href="{youtube_link}">YouTube Livestream</a>
 """
 
     POST_CALL_MESSAGE_TEMPLATE = """

@@ -160,8 +160,8 @@ async def send_reminder(bot: Bot, template: str) -> None:
         await bot.send_message(
             chat_id=Config.TELEGRAM_CHAT_ID,
             text=message,
-            parse_mode=None,
-            disable_web_page_preview=False,
+            parse_mode=ParseMode.HTML,
+            disable_web_page_preview=True,
         )
         logger.info(f"Reminder sent successfully with template: {template[:30]}")
     except Exception as e:
@@ -322,10 +322,10 @@ async def nextcall_info_command(update: Update, context: ContextTypes.DEFAULT_TY
         f"⏳ Countdown: {days} days, {hours} hours, {minutes} minutes\n\n"
         f"📝 Topics:\n{topic_str}\n\n"
         f"🔗 Join the Call:\n"
-        f"• Jitsi: {Config.JITSI_LINK}\n"
-        f"• Calendar: {calendar_link}",
-        parse_mode=None,
-        disable_web_page_preview=False,
+        f'• <a href="{Config.JITSI_LINK}">Jitsi</a>\n'
+        f'• <a href="{calendar_link}">Calendar</a>',
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
     )
 
 
