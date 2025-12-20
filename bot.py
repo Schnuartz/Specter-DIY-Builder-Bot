@@ -117,15 +117,12 @@ def format_message(template: str, call_date: Optional[datetime] = None, topics: 
     # Generate dynamic calendar link
     calendar_link = get_calendar_link_for_call(call_date)
 
-    # Escape special characters for MARKDOWN_V2 in topics only
-    topic_str_escaped = escape_markdown(topic_str, version=2)
-
     return template.format(
         call_number=call_number,
         date=call_date.strftime("%d.%m"),
         hour=Config.CALL_HOUR,
         minute=Config.CALL_MINUTE,
-        topics=topic_str_escaped,
+        topics=topic_str,
         calendar_link=calendar_link,
         jitsi_link=Config.JITSI_LINK,
         youtube_link=f"https://www.youtube.com/@{Config.YOUTUBE_CHANNEL_ID}/live"
@@ -163,8 +160,8 @@ async def send_reminder(bot: Bot, template: str) -> None:
         await bot.send_message(
             chat_id=Config.TELEGRAM_CHAT_ID,
             text=message,
-            parse_mode=ParseMode.MARKDOWN_V2,
-            disable_web_page_preview=True,
+            parse_mode=None,
+            disable_web_page_preview=False,
         )
         logger.info(f"Reminder sent successfully with template: {template[:30]}")
     except Exception as e:
@@ -318,21 +315,17 @@ async def nextcall_info_command(update: Update, context: ContextTypes.DEFAULT_TY
 
     calendar_link = get_calendar_link_for_call(next_call)
 
-    # Escape special characters for MARKDOWN_V2 (but not URLs in markdown links)
-    topic_str_escaped = escape_markdown(topic_str, version=2)
-    date_str = escape_markdown(next_call.strftime('%A, %d %B %Y'), version=2)
-
     await update.message.reply_text(
-        f"🗓️ *Next Specter DIY Builder Call #{call_number}*\n\n"
-        f"📅 *Date*: {date_str}\n"
-        f"⏰ *Time*: {Config.CALL_HOUR}:{Config.CALL_MINUTE:02d} CET\n\n"
-        f"⏳ *Countdown*: {days} days, {hours} hours, {minutes} minutes\n\n"
-        f"📝 *Topics*:\n{topic_str_escaped}\n\n"
-        f"🔗 *Join the Call*:\n"
-        f"• [Jitsi]({Config.JITSI_LINK})\n"
-        f"• [Calendar]({calendar_link})",
-        parse_mode=ParseMode.MARKDOWN_V2,
-        disable_web_page_preview=True,
+        f"🗓️ Next Specter DIY Builder Call #{call_number}\n\n"
+        f"📅 Date: {next_call.strftime('%A, %d %B %Y')}\n"
+        f"⏰ Time: {Config.CALL_HOUR}:{Config.CALL_MINUTE:02d} CET\n\n"
+        f"⏳ Countdown: {days} days, {hours} hours, {minutes} minutes\n\n"
+        f"📝 Topics:\n{topic_str}\n\n"
+        f"🔗 Join the Call:\n"
+        f"• Jitsi: {Config.JITSI_LINK}\n"
+        f"• Calendar: {calendar_link}",
+        parse_mode=None,
+        disable_web_page_preview=False,
     )
 
 
