@@ -117,7 +117,7 @@ def format_message(template: str, call_date: Optional[datetime] = None, topics: 
     # Generate dynamic calendar link
     calendar_link = get_calendar_link_for_call(call_date)
 
-    # Escape special characters for MARKDOWN_V2
+    # Escape special characters for MARKDOWN_V2 in topics only
     topic_str_escaped = escape_markdown(topic_str, version=2)
 
     return template.format(
@@ -318,7 +318,7 @@ async def nextcall_info_command(update: Update, context: ContextTypes.DEFAULT_TY
 
     calendar_link = get_calendar_link_for_call(next_call)
 
-    # Escape special characters for MARKDOWN_V2
+    # Escape special characters for MARKDOWN_V2 (but not URLs in markdown links)
     topic_str_escaped = escape_markdown(topic_str, version=2)
     date_str = escape_markdown(next_call.strftime('%A, %d %B %Y'), version=2)
 
